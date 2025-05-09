@@ -1,2 +1,2 @@
-# SIT-725-Selby-Project
-This is group project.
+# SIT725-Selby-Project
+This is our SIT 725 Project
