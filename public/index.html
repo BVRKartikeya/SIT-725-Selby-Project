@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Selby - Login/Register</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="main.css">
+</head>
+<body class="grey lighten-4">
+
+  <div class="container">
+    <h4 class="center-align blue-text text-darken-3">Selby Marketplace</h4>
+
+    <div class="card">
+      <div class="card-tabs">
+        <ul class="tabs tabs-fixed-width">
+          <li class="tab"><a href="#loginForm" class="active">Login</a></li>
+          <li class="tab"><a href="#registerForm">Register</a></li>
+        </ul>
+      </div>
+
+      <div class="card-content">
+        
+        <div id="loginForm">
+          <form id="login" action="/login" method="POST">
+            <div class="input-field">
+              <i class="material-icons prefix">email</i>
+              <input type="email" name="email" id="login_email" required>
+              <label for="login_email">Email</label>
+            </div>
+            <div class="input-field">
+              <i class="material-icons prefix">lock</i>
+              <input type="password" name="password" id="login_password" required>
+              <label for="login_password">Password</label>
+            </div>
+            <div class="center-align">
+              <button type="submit" class="btn blue waves-effect waves-light">Login</button>
+            </div>
+          </form>
+        </div>
+
+        
+        <div id="registerForm">
+          <form id="register" action="/register" method="POST">
+            <div class="input-field">
+              <i class="material-icons prefix">person</i>
+              <input type="text" name="name" id="reg_name" required>
+              <label for="reg_name">Full Name</label>
+            </div>
+            <div class="input-field">
+              <i class="material-icons prefix">email</i>
+              <input type="email" name="email" id="reg_email" required>
+              <label for="reg_email">Email</label>
+            </div>
+            <div class="input-field">
+              <i class="material-icons prefix">lock</i>
+              <input type="password" name="password" id="reg_password" required>
+              <label for="reg_password">Password</label>
+            </div>
+            <div class="input-field">
+              <i class="material-icons prefix">lock_outline</i>
+              <input type="password" name="confirmPassword" id="reg_confirm" required>
+              <label for="reg_confirm">Confirm Password</label>
+            </div>
+            <div class="center-align">
+              <button type="submit" class="btn green waves-effect waves-light">Register</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var el = document.querySelectorAll('.tabs');
+      M.Tabs.init(el, {});
+    });
+  </script>
+</body>
+</html>
