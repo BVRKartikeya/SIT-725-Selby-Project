@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>OTP Verification</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+</head>
+<body class="container">
+  <h4 class="blue-text text-darken-3 center-align">Verify OTP</h4>
+
+  <div class="row">
+    <form class="col s12" id="otpForm">
+      <div class="input-field">
+        <input id="email" type="email" required>
+        <label for="email">Email used for registration</label>
+      </div>
+      <div class="input-field">
+        <input id="otp" type="text" maxlength="6" required>
+        <label for="otp">Enter OTP</label>
+      </div>
+      <button class="btn green" type="submit">Verify</button>
+    </form>
+  </div>
+
+  <script>
+    document.getElementById('otpForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const otp = document.getElementById('otp').value;
+
+      const res = await fetch('http://localhost:3000/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        alert('OTP Verified. Registration complete.');
+      } else {
+        alert('OTP Invalid or Expired.');
+      }
+    });
+  </script>
+</body>
+</html>

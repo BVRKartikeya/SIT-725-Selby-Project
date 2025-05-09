@@ -1,18 +1,30 @@
-function showForm(type) {
-  const loginForm = document.getElementById('loginForm');
-  const registerForm = document.getElementById('registerForm');
-  const loginTab = document.getElementById('loginTab');
-  const registerTab = document.getElementById('registerTab');
+document.addEventListener('DOMContentLoaded', function () {
 
-  if (type === 'login') {
-    loginForm.style.display = 'block';
-    registerForm.style.display = 'none';
-    loginTab.classList.add('active');
-    registerTab.classList.remove('active');
-  } else {
-    loginForm.style.display = 'none';
-    registerForm.style.display = 'block';
-    loginTab.classList.remove('active');
-    registerTab.classList.add('active');
+  const tabs = document.querySelectorAll('.tabs');
+  M.Tabs.init(tabs);
+
+  const loginTab = document.querySelector("a[href='#loginForm']");
+  const registerTab = document.querySelector("a[href='#registerForm']");
+
+  loginTab.addEventListener("click", () => {
+    console.log("Login tab clicked");
+  });
+
+  registerTab.addEventListener("click", () => {
+    console.log("Register tab clicked");
+  });
+
+
+  const password = document.getElementById('reg_password');
+  const confirm = document.getElementById('reg_confirm');
+
+  if (password && confirm) {
+    confirm.addEventListener('input', function () {
+      if (password.value !== confirm.value) {
+        confirm.setCustomValidity("Passwords do not match");
+      } else {
+        confirm.setCustomValidity("");
+      }
+    });
   }
-}
+});

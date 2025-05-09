@@ -8,7 +8,6 @@
   <link rel="stylesheet" href="main.css">
 </head>
 <body class="grey lighten-4">
-
   <div class="container">
     <h4 class="center-align blue-text text-darken-3">Selby Marketplace</h4>
 
@@ -40,9 +39,9 @@
           </form>
         </div>
 
-        
+      
         <div id="registerForm">
-          <form id="register" action="/register" method="POST">
+          <form id="register" method="POST">
             <div class="input-field">
               <i class="material-icons prefix">person</i>
               <input type="text" name="name" id="reg_name" required>
@@ -72,12 +71,26 @@
     </div>
   </div>
 
-  
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       var el = document.querySelectorAll('.tabs');
-      M.Tabs.init(el, {});
+      M.Tabs.init(el);
+    });
+
+    document.getElementById('register').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const email = document.getElementById('reg_email').value;
+
+      const res = await fetch('http://localhost:3000/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+
+      const data = await res.json();
+      alert(`OTP sent to ${email}. (Simulated in console).`);
+      window.location.href = 'otp.html';
     });
   </script>
 </body>
