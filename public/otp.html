@@ -22,23 +22,39 @@
     </form>
   </div>
 
+  <p id="message" class="center-align"></p>
+
   <script>
     document.getElementById('otpForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       const email = document.getElementById('email').value;
       const otp = document.getElementById('otp').value;
+      const msg = document.getElementById('message');
 
-      const res = await fetch('http://localhost:3000/verify-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, otp })
-      });
+      try {
+        const res = await fetch('http://localhost:3000/verify-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, otp })
+        });
 
-      const data = await res.json();
-      if (data.success) {
-        alert('OTP Verified. Registration complete.');
-      } else {
-        alert('OTP Invalid or Expired.');
+        const data = await res.json();
+        if (data.success) {
+          msg.textContent = " OTP Verified! Redirecting...";
+          msg.className = "green-text";
+
+          
+          setTimeout(() => {
+            window.location.href = "listing.html";
+          }, 1500);
+
+        } else {
+          msg.textContent = " Invalid OTP.";
+          msg.className = "red-text";
+        }
+      } catch (err) {
+        msg.textContent = " Server error or expired OTP.";
+        msg.className = "red-text";
       }
     });
   </script>

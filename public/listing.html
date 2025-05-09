@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Create Product Listing</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body class="container">
+  <h4 class="blue-text text-darken-3 center-align">Add a Product</h4>
+
+  <form id="productForm">
+    <div class="input-field">
+      <i class="material-icons prefix">title</i>
+      <input type="text" id="title" name="title" required>
+      <label for="title">Product Title</label>
+    </div>
+
+    <div class="input-field">
+      <i class="material-icons prefix">attach_money</i>
+      <input type="number" id="price" name="price" required>
+      <label for="price">Price ($)</label>
+    </div>
+
+    <div class="file-field input-field">
+      <div class="btn blue">
+        <span>Upload Photo</span>
+        <input type="file" id="photo" accept="image/*" required>
+      </div>
+      <div class="file-path-wrapper">
+        <input class="file-path validate" type="text" placeholder="Upload an image">
+      </div>
+    </div>
+
+    <div class="center-align">
+      <button class="btn green" type="submit">Submit</button>
+    </div>
+
+    <p id="message" class="center-align"></p>
+  </form>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <script>
+    document.getElementById("productForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+
+      const title = document.getElementById("title").value;
+      const price = document.getElementById("price").value;
+      const photoFile = document.getElementById("photo").files[0];
+      const messageEl = document.getElementById("message");
+
+      if (!photoFile) {
+        messageEl.textContent = "Please select a photo.";
+        messageEl.className = "red-text";
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64Photo = reader.result;
+
+        const res = await fetch("http://localhost:3000/product", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title, price, photo: base64Photo })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          messageEl.textContent = " Product listed successfully!";
+          messageEl.className = "green-text";
+          this.reset();
+        } else {
+          messageEl.textContent = (data.message || "Error listing product.");
+          messageEl.className = "red-text";
+        }
+      };
+      reader.readAsDataURL(photoFile);
+    });
+  </script>
+</body>
+</html>
