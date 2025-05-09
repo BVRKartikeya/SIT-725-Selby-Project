@@ -2,58 +2,48 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>OTP Verification</title>
+  <title>Verify OTP</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
 </head>
 <body class="container">
   <h4 class="blue-text text-darken-3 center-align">Verify OTP</h4>
 
-  <div class="row">
-    <form class="col s12" id="otpForm">
-      <div class="input-field">
-        <input id="email" type="email" required>
-        <label for="email">Email used for registration</label>
-      </div>
-      <div class="input-field">
-        <input id="otp" type="text" maxlength="6" required>
-        <label for="otp">Enter OTP</label>
-      </div>
+  <form id="otpForm">
+    <div class="input-field">
+      <input type="email" id="email" required>
+      <label for="email">Email</label>
+    </div>
+    <div class="input-field">
+      <input type="text" id="otp" maxlength="6" required>
+      <label for="otp">Enter OTP</label>
+    </div>
+    <div class="center-align">
       <button class="btn green" type="submit">Verify</button>
-    </form>
-  </div>
-
-  <p id="message" class="center-align"></p>
+    </div>
+    <p id="message" class="center-align"></p>
+  </form>
 
   <script>
-    document.getElementById('otpForm').addEventListener('submit', async function(e) {
+    document.getElementById("otpForm").addEventListener("submit", async function (e) {
       e.preventDefault();
-      const email = document.getElementById('email').value;
-      const otp = document.getElementById('otp').value;
-      const msg = document.getElementById('message');
+      const email = document.getElementById("email").value;
+      const otp = document.getElementById("otp").value;
 
-      try {
-        const res = await fetch('http://localhost:3000/verify-otp', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, otp })
-        });
+      const res = await fetch("/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, otp })
+      });
 
-        const data = await res.json();
-        if (data.success) {
-          msg.textContent = " OTP Verified! Redirecting...";
-          msg.className = "green-text";
+      const data = await res.json();
+      const msg = document.getElementById("message");
 
-          
-          setTimeout(() => {
-            window.location.href = "listing.html";
-          }, 1500);
-
-        } else {
-          msg.textContent = " Invalid OTP.";
-          msg.className = "red-text";
-        }
-      } catch (err) {
-        msg.textContent = " Server error or expired OTP.";
+      if (data.success) {
+        msg.textContent = "Verified! Redirecting...";
+        msg.className = "green-text";
+        setTimeout(() => window.location.href = "listing.html?email=" + encodeURIComponent(email), 1500);
+      } else {
+        msg.textContent = "Invalid or expired OTP";
         msg.className = "red-text";
       }
     });
