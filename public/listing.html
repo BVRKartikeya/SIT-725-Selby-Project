@@ -41,7 +41,21 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
   <script>
-    document.getElementById("productForm").addEventListener("submit", async function(e) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const email = urlParams.get('email');
+
+    document.addEventListener('DOMContentLoaded', function () {
+      M.updateTextFields();
+
+      
+      document.getElementById("photo").addEventListener("change", function () {
+        const fileName = this.files[0]?.name || '';
+        const filePath = document.querySelector(".file-path");
+        if (filePath) filePath.value = fileName;
+      });
+    });
+
+    document.getElementById("productForm").addEventListener("submit", async function (e) {
       e.preventDefault();
 
       const title = document.getElementById("title").value;
@@ -62,19 +76,21 @@
         const res = await fetch("http://localhost:3000/product", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title, price, photo: base64Photo })
+          body: JSON.stringify({ title, price, photo: base64Photo, ownerEmail: email })
         });
 
         const data = await res.json();
         if (data.success) {
-          messageEl.textContent = " Product listed successfully!";
+          messageEl.textContent = "Product listed successfully!";
           messageEl.className = "green-text";
           this.reset();
+          document.querySelector(".file-path").value = "";
         } else {
-          messageEl.textContent = (data.message || "Error listing product.");
+          messageEl.textContent = data.message || "Error listing product.";
           messageEl.className = "red-text";
         }
       };
+
       reader.readAsDataURL(photoFile);
     });
   </script>
