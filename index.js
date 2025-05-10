@@ -14,13 +14,11 @@ app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-
 mongoose.connect('mongodb://localhost:27017/selby', {
   useNewUrlParser: true,
   useUnifiedTopology: true
 }).then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB error:', err));
-
 
 const userSchema = new mongoose.Schema({
   name: String,
@@ -37,77 +35,83 @@ const productSchema = new mongoose.Schema({
   ownerEmail: String
 });
 
+const reviewSchema = new mongoose.Schema({
+  productId: String,
+  rating: Number,
+  comment: String
+});
+
 const User = mongoose.model('User', userSchema);
 const Product = mongoose.model('Product', productSchema);
-
-
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public/index.html'));
-});
+const Review = mongoose.model('Review', reviewSchema);
 
 app.post('/register', async (req, res) => {
-  const { name, email, password } = req.body;
   try {
-    const exists = await User.findOne({ email });
-    if (exists) return res.json({ success: false, message: "User already exists." });
-
-    await User.create({ name, email, password });
-    res.json({ success: true });
-  } catch {
-    res.status(500).json({ success: false, message: "Registration failed." });
-  }
-});
-
-app.post('/send-otp', async (req, res) => {
-  const { email } = req.body;
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  const token = jwt.sign({ otp }, SECRET_KEY, { expiresIn: '5m' });
-
-  await User.findOneAndUpdate({ email }, { otpToken: token });
-  console.log(`OTP for ${email}: ${otp}`);
-  res.json({ success: true });
-});
-
-app.post('/verify-otp', async (req, res) => {
-  const { email, otp } = req.body;
-  const user = await User.findOne({ email });
-  if (!user?.otpToken) return res.status(400).json({ success: false });
-
-  try {
-    const decoded = jwt.verify(user.otpToken, SECRET_KEY);
-    if (decoded.otp === otp) {
-      user.isVerified = true;
-      user.otpToken = null;
-      await user.save();
-      return res.json({ success: true });
-    }
-    res.status(401).json({ success: false, message: "Incorrect OTP" });
-  } catch {
-    res.status(401).json({ success: false, message: "OTP expired or invalid" });
+    const user = new User(req.body);
+    await user.save();
+    res.status(200).json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
   }
 });
 
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
   const user = await User.findOne({ email, password, isVerified: true });
-  if (!user) return res.status(401).json({ success: false });
+  if (user) {
+    const token = jwt.sign({ email: user.email }, SECRET_KEY, { expiresIn: '1h' });
+    res.json({ success: true, token });
+  } else {
+    res.json({ success: false, message: 'Invalid credentials or not verified.' });
+  }
+});
 
-  res.json({ success: true });
+app.post('/verify-otp', async (req, res) => {
+  const { email, otp } = req.body;
+  const user = await User.findOne({ email, otpToken: otp });
+  if (user) {
+    user.isVerified = true;
+    user.otpToken = null;
+    await user.save();
+    res.json({ success: true });
+  } else {
+    res.json({ success: false });
+  }
+});
+
+app.post('/send-otp', async (req, res) => {
+  const { email } = req.body;
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  await User.updateOne({ email }, { otpToken: otp });
+  console.log(`OTP for ${email}: ${otp}`);
+  res.sendStatus(200);
 });
 
 app.post('/product', async (req, res) => {
-  const { title, price, photo, ownerEmail } = req.body;
-  if (!title || !price || !photo || !ownerEmail)
-    return res.status(400).json({ success: false, message: "Missing fields" });
-
-  const newProduct = await Product.create({ title, price, photo, ownerEmail });
-  console.log(" New product listed:", newProduct);
-  res.json({ success: true });
+  try {
+    const createdProduct = await Product.create(req.body);
+    res.json({ success: true, productId: createdProduct._id });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
-app.get('/products', async (req, res) => {
-  const products = await Product.find();
-  res.json(products);
+
+app.post("/api/review", async (req, res) => {
+  const { productId, rating, comment } = req.body;
+  await Review.create({ productId, rating: parseInt(rating), comment });
+  res.json({ success: true, message: "Review submitted." });
 });
 
-app.listen(PORT, () => console.log(` Selby Server running at http://localhost:${PORT}`));
+app.get("/api/review/average/:productId", async (req, res) => {
+  const productId = req.params.productId;
+  const reviews = await Review.find({ productId });
+  if (reviews.length === 0) return res.json({ averageRating: 0 });
+  const total = reviews.reduce((sum, r) => sum + Number(r.rating), 0);
+  const averageRating = total / reviews.length;
+  res.json({ averageRating: parseFloat(averageRating.toFixed(1)) });
+});
+
+app.listen(PORT, () => {
+  console.log(`Selby Server running at http://localhost:${PORT}`);
+});

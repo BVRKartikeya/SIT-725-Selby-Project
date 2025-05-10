@@ -44,7 +44,6 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-  <script src="script.js"></script>
   <script>
     const urlParams = new URLSearchParams(window.location.search);
     const email = urlParams.get('email') || localStorage.getItem('user_email');
@@ -89,6 +88,9 @@
           messageEl.className = "green-text";
           this.reset();
           document.querySelector(".file-path").value = "";
+
+          
+          window.location.href = "review.html?productId=" + data.productId;
         } else {
           messageEl.textContent = data.message || "Error listing product.";
           messageEl.className = "red-text";
@@ -97,6 +99,11 @@
 
       reader.readAsDataURL(photoFile);
     });
+
+    function logout() {
+      localStorage.removeItem("user_email");
+      window.location.href = "index.html";
+    }
   </script>
 </body>
 </html>
