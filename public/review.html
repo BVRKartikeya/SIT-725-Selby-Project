@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Product Review</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+  <style>
+    .star-rating {
+      direction: rtl;
+      display: flex;
+      justify-content: center;
+    }
+    .star-rating input[type="radio"] {
+      display: none;
+    }
+    .star-rating label {
+      font-size: 2rem;
+      color: #ccc;
+      cursor: pointer;
+    }
+    .star-rating input:checked ~ label,
+    .star-rating label:hover,
+    .star-rating label:hover ~ label {
+      color: gold;
+    }
+  </style>
+</head>
+<body class="container">
+  <h4 class="center-align blue-text">Leave a Review</h4>
+
+  <form id="reviewForm">
+    <div class="star-rating">
+      <input type="radio" id="5-stars" name="rating" value="5"><label for="5-stars">&#9733;</label>
+      <input type="radio" id="4-stars" name="rating" value="4"><label for="4-stars">&#9733;</label>
+      <input type="radio" id="3-stars" name="rating" value="3"><label for="3-stars">&#9733;</label>
+      <input type="radio" id="2-stars" name="rating" value="2"><label for="2-stars">&#9733;</label>
+      <input type="radio" id="1-star" name="rating" value="1"><label for="1-star">&#9733;</label>
+    </div>
+
+    <div class="input-field">
+      <textarea id="comment" class="materialize-textarea" required></textarea>
+      <label for="comment">Your Review</label>
+    </div>
+
+    <div class="center-align">
+      <button type="submit" class="btn green">Submit Review</button>
+    </div>
+    <p class="center-align" id="message"></p>
+    <p class="center-align" id="avgRatingDisplay"></p>
+  </form>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('productId');
+
+    document.getElementById("reviewForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const rating = document.querySelector('input[name="rating"]:checked')?.value;
+      const comment = document.getElementById("comment").value;
+
+      if (!rating) {
+        document.getElementById("message").textContent = "Please select a rating.";
+        return;
+      }
+
+      const res = await fetch(`/api/review`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId, rating, comment })
+      });
+
+      const data = await res.json();
+      document.getElementById("message").textContent = data.message || "Submitted!";
+      loadAverageRating();
+
+      setTimeout(() => {
+        window.location.href = "index.html";
+      }, 1500);
+    });
+
+    async function loadAverageRating() {
+      const res = await fetch(`/api/review/average/${productId}`);
+      const data = await res.json();
+      document.getElementById("avgRatingDisplay").textContent = `Average Rating: ${data.averageRating || 0}/5`;
+    }
+
+    loadAverageRating();
+  </script>
+</body>
+</html>
