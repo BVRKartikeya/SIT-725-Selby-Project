@@ -19,7 +19,6 @@
       </div>
 
       <div class="card-content">
-     
         <div id="loginForm">
           <form id="login">
             <div class="input-field">
@@ -36,7 +35,6 @@
           </form>
         </div>
 
-       
         <div id="registerForm">
           <form id="register">
             <div class="input-field">
@@ -100,6 +98,7 @@
       const data = await res.json();
       if (data.success) {
         alert("Login successful!");
+        localStorage.setItem("user_email", email); // Store session
         window.location.href = "listing.html?email=" + encodeURIComponent(email);
       } else {
         alert("Invalid credentials!");

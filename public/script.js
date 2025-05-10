@@ -1,30 +1,35 @@
-document.addEventListener('DOMContentLoaded', function () {
+// Session timeout: 5 minutes
+const SESSION_TIMEOUT = 5 * 60 * 1000;
+let sessionTimer;
 
-  const tabs = document.querySelectorAll('.tabs');
-  M.Tabs.init(tabs);
+function resetSessionTimer() {
+  clearTimeout(sessionTimer);
+  sessionTimer = setTimeout(() => {
+    alert("Session expired due to inactivity.");
+    logout();
+  }, SESSION_TIMEOUT);
+}
 
-  const loginTab = document.querySelector("a[href='#loginForm']");
-  const registerTab = document.querySelector("a[href='#registerForm']");
+function logout() {
+  localStorage.removeItem('user_email');
+  window.location.href = 'index.html';
+}
 
-  loginTab.addEventListener("click", () => {
-    console.log("Login tab clicked");
-  });
+document.addEventListener('mousemove', resetSessionTimer);
+document.addEventListener('keydown', resetSessionTimer);
 
-  registerTab.addEventListener("click", () => {
-    console.log("Register tab clicked");
-  });
+window.onload = function () {
+  resetSessionTimer();
 
+  if (window.location.pathname.includes("listing.html")) {
+    const urlEmail = new URLSearchParams(window.location.search).get("email");
+    const storedEmail = localStorage.getItem("user_email");
 
-  const password = document.getElementById('reg_password');
-  const confirm = document.getElementById('reg_confirm');
-
-  if (password && confirm) {
-    confirm.addEventListener('input', function () {
-      if (password.value !== confirm.value) {
-        confirm.setCustomValidity("Passwords do not match");
-      } else {
-        confirm.setCustomValidity("");
-      }
-    });
+    if (urlEmail) {
+      localStorage.setItem("user_email", urlEmail);
+    } else if (!storedEmail) {
+      alert("Please login to continue.");
+      logout();
+    }
   }
-});
+};

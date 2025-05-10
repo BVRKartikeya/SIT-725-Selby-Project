@@ -39,15 +39,19 @@
     <p id="message" class="center-align"></p>
   </form>
 
+  <div class="center-align" style="margin-top: 20px;">
+    <button class="btn red" onclick="logout()">Logout</button>
+  </div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <script src="script.js"></script>
   <script>
     const urlParams = new URLSearchParams(window.location.search);
-    const email = urlParams.get('email');
+    const email = urlParams.get('email') || localStorage.getItem('user_email');
 
     document.addEventListener('DOMContentLoaded', function () {
       M.updateTextFields();
 
-      
       document.getElementById("photo").addEventListener("change", function () {
         const fileName = this.files[0]?.name || '';
         const filePath = document.querySelector(".file-path");
