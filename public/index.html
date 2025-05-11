@@ -98,7 +98,7 @@
       const data = await res.json();
       if (data.success) {
         alert("Login successful!");
-        localStorage.setItem("user_email", email); // Store session
+        localStorage.setItem("user_email", email); 
         window.location.href = "listing.html?email=" + encodeURIComponent(email);
       } else {
         alert("Invalid credentials!");

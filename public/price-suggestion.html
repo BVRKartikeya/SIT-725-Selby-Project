@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Suggested Price Estimation</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+</head>
+<body class="container">
+  <h4 class="center-align blue-text text-darken-3">Best Price Suggestion</h4>
+
+  <div id="loading" class="center-align">Fetching best price...</div>
+  <div id="result" style="display: none;">
+    <p><strong>Your Entered Price:</strong> $<span id="userPrice"></span></p>
+    <p><strong>Suggested Price:</strong> $<span id="suggestedPrice"></span></p>
+    <p id="error" class="red-text"></p>
+
+    <div class="center-align">
+      <button class="btn green" id="continueBtn">Continue to Review</button>
+      <button class="btn orange" id="editBtn">Edit Listing</button>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const title = params.get("title");
+    const price = parseFloat(params.get("price"));
+    const photo = localStorage.getItem("listing_photo");
+    const email = params.get("email");
+
+    document.getElementById("userPrice").textContent = price.toFixed(2);
+
+    async function fetchSuggestedPrice() {
+      try {
+        const res = await fetch("/api/price-suggestion", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title, price })
+        });
+
+        if (!res.ok) throw new Error("API error");
+
+        const data = await res.json();
+        const suggested = parseFloat(data.suggestedPrice || price * 1.1);
+
+        document.getElementById("suggestedPrice").textContent = suggested.toFixed(2);
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("result").style.display = "block";
+
+        document.getElementById("continueBtn").onclick = async () => {
+          const res = await fetch("/product", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title, price, photo, ownerEmail: email })
+          });
+
+          const data = await res.json();
+          if (data.success) {
+            window.location.href = `review.html?productId=${data.productId}`;
+          } else {
+            alert("Error saving product!");
+          }
+        };
+
+        document.getElementById("editBtn").onclick = () => {
+          window.location.href = `listing.html?email=${encodeURIComponent(email)}&edit=1`;
+        };
+
+      } catch (err) {
+        document.getElementById("error").textContent = "Failed to fetch price suggestion. Using entered price.";
+        document.getElementById("suggestedPrice").textContent = price.toFixed(2);
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("result").style.display = "block";
+      }
+    }
+
+    fetchSuggestedPrice();
+  </script>
+</body>
+</html>
