@@ -1,9 +1,11 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const bodyParser = require('body-parser');
-const jwt = require('jsonwebtoken');
 const path = require('path');
+const jwt = require('jsonwebtoken');
+const bodyParser = require('body-parser');
+const fetch = require('node-fetch');
+require('dotenv').config();
 
 const app = express();
 const PORT = 3000;
@@ -14,11 +16,13 @@ app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+
 mongoose.connect('mongodb://localhost:27017/selby', {
   useNewUrlParser: true,
   useUnifiedTopology: true
 }).then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB error:', err));
+
 
 const userSchema = new mongoose.Schema({
   name: String,
@@ -36,7 +40,7 @@ const productSchema = new mongoose.Schema({
 });
 
 const reviewSchema = new mongoose.Schema({
-  productId: String,
+  productId: mongoose.Schema.Types.ObjectId,
   rating: Number,
   comment: String
 });
@@ -45,73 +49,114 @@ const User = mongoose.model('User', userSchema);
 const Product = mongoose.model('Product', productSchema);
 const Review = mongoose.model('Review', reviewSchema);
 
+
+const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
+
 app.post('/register', async (req, res) => {
-  try {
-    const user = new User(req.body);
-    await user.save();
-    res.status(200).json({ success: true });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
+  const { name, email, password } = req.body;
+  const user = new User({ name, email, password });
+  await user.save();
+  res.status(201).json({ success: true });
 });
 
-app.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-  const user = await User.findOne({ email, password, isVerified: true });
-  if (user) {
-    const token = jwt.sign({ email: user.email }, SECRET_KEY, { expiresIn: '1h' });
-    res.json({ success: true, token });
-  } else {
-    res.json({ success: false, message: 'Invalid credentials or not verified.' });
-  }
+app.post('/send-otp', async (req, res) => {
+  const { email } = req.body;
+  const otp = generateOTP();
+  const user = await User.findOne({ email });
+  if (!user) return res.json({ success: false, message: "User not found" });
+
+  user.otpToken = otp;
+  await user.save();
+
+  console.log(`OTP for ${email}: ${otp}`); 
+  res.json({ success: true });
 });
+
 
 app.post('/verify-otp', async (req, res) => {
   const { email, otp } = req.body;
-  const user = await User.findOne({ email, otpToken: otp });
+  const user = await User.findOne({ email });
+  if (!user || user.otpToken !== otp) {
+    return res.json({ success: false, message: "Invalid or expired OTP" });
+  }
+
+  user.isVerified = true;
+  user.otpToken = null;
+  await user.save();
+
+  res.json({ success: true });
+});
+
+
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  const user = await User.findOne({ email, password });
   if (user) {
-    user.isVerified = true;
-    user.otpToken = null;
-    await user.save();
-    res.json({ success: true });
+    const token = jwt.sign({ email }, SECRET_KEY, { expiresIn: '2h' });
+    res.json({ success: true, token });
   } else {
     res.json({ success: false });
   }
 });
 
-app.post('/send-otp', async (req, res) => {
-  const { email } = req.body;
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  await User.updateOne({ email }, { otpToken: otp });
-  console.log(`OTP for ${email}: ${otp}`);
-  res.sendStatus(200);
-});
-
 app.post('/product', async (req, res) => {
   try {
-    const createdProduct = await Product.create(req.body);
-    res.json({ success: true, productId: createdProduct._id });
+    const { title, price, photo, ownerEmail } = req.body;
+    const newProduct = new Product({ title, price, photo, ownerEmail });
+    await newProduct.save();
+    res.json({ success: true, productId: newProduct._id });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error('Product listing error:', err);
+    res.status(500).json({ success: false, message: 'Failed to list product' });
   }
 });
 
 
-app.post("/api/review", async (req, res) => {
-  const { productId, rating, comment } = req.body;
-  await Review.create({ productId, rating: parseInt(rating), comment });
-  res.json({ success: true, message: "Review submitted." });
+app.post('/api/review', async (req, res) => {
+  try {
+    const { productId, rating, comment } = req.body;
+    const review = new Review({ productId, rating, comment });
+    await review.save();
+    res.json({ success: true, message: 'Review submitted' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to submit review' });
+  }
 });
 
-app.get("/api/review/average/:productId", async (req, res) => {
-  const productId = req.params.productId;
+
+app.get('/api/review/average/:productId', async (req, res) => {
+  const { productId } = req.params;
   const reviews = await Review.find({ productId });
-  if (reviews.length === 0) return res.json({ averageRating: 0 });
-  const total = reviews.reduce((sum, r) => sum + Number(r.rating), 0);
-  const averageRating = total / reviews.length;
-  res.json({ averageRating: parseFloat(averageRating.toFixed(1)) });
+  const avg = reviews.length ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length) : 0;
+  res.json({ averageRating: avg.toFixed(2) });
 });
 
-app.listen(PORT, () => {
-  console.log(`Selby Server running at http://localhost:${PORT}`);
+
+app.post('/api/price-suggestion', async (req, res) => {
+  const { title, price } = req.body;
+
+  try {
+    const response = await fetch('https://fakestoreapi.com/products');
+    const products = await response.json();
+
+    const matched = products.filter(p =>
+      p.title.toLowerCase().includes(title.toLowerCase())
+    );
+
+    const prices = matched.map(p => parseFloat(p.price)).filter(p => !isNaN(p));
+
+    if (prices.length > 0) {
+      const avg = prices.reduce((sum, p) => sum + p, 0) / prices.length;
+      res.json({ suggestedPrice: avg.toFixed(2), source: 'FakeStoreAPI' });
+    } else {
+      const fallbackPrice = parseFloat(price) * 1.1;
+      res.json({ suggestedPrice: fallbackPrice.toFixed(2), fallback: true });
+    }
+  } catch (err) {
+    console.error('Error contacting FakeStore API:', err);
+    const fallbackPrice = parseFloat(price) * 1.1;
+    res.json({ suggestedPrice: fallbackPrice.toFixed(2), fallback: true });
+  }
 });
+
+app.listen(PORT, () => console.log(`Selby Server running at http://localhost:${PORT}`));

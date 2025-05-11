@@ -12,13 +12,13 @@
   <form id="productForm">
     <div class="input-field">
       <i class="material-icons prefix">title</i>
-      <input type="text" id="title" name="title" required>
+      <input type="text" id="title" required>
       <label for="title">Product Title</label>
     </div>
 
     <div class="input-field">
       <i class="material-icons prefix">attach_money</i>
-      <input type="number" id="price" name="price" required>
+      <input type="number" id="price" required>
       <label for="price">Price ($)</label>
     </div>
 
@@ -44,11 +44,12 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-  <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const email = urlParams.get('email') || localStorage.getItem('user_email');
 
-    document.addEventListener('DOMContentLoaded', function () {
+
+  <script>
+    const email = new URLSearchParams(window.location.search).get('email') || localStorage.getItem('user_email');
+
+    document.addEventListener("DOMContentLoaded", () => {
       M.updateTextFields();
 
       document.getElementById("photo").addEventListener("change", function () {
@@ -56,48 +57,31 @@
         const filePath = document.querySelector(".file-path");
         if (filePath) filePath.value = fileName;
       });
-    });
 
-    document.getElementById("productForm").addEventListener("submit", async function (e) {
-      e.preventDefault();
+      document.getElementById("productForm").addEventListener("submit", function (e) {
+        e.preventDefault();
 
-      const title = document.getElementById("title").value;
-      const price = document.getElementById("price").value;
-      const photoFile = document.getElementById("photo").files[0];
-      const messageEl = document.getElementById("message");
+        const title = document.getElementById("title").value.trim();
+        const price = document.getElementById("price").value.trim();
+        const photoFile = document.getElementById("photo").files[0];
+        const messageEl = document.getElementById("message");
 
-      if (!photoFile) {
-        messageEl.textContent = "Please select a photo.";
-        messageEl.className = "red-text";
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64Photo = reader.result;
-
-        const res = await fetch("http://localhost:3000/product", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title, price, photo: base64Photo, ownerEmail: email })
-        });
-
-        const data = await res.json();
-        if (data.success) {
-          messageEl.textContent = "Product listed successfully!";
-          messageEl.className = "green-text";
-          this.reset();
-          document.querySelector(".file-path").value = "";
-
-          
-          window.location.href = "review.html?productId=" + data.productId;
-        } else {
-          messageEl.textContent = data.message || "Error listing product.";
+        if (!photoFile) {
+          messageEl.textContent = "Please select a photo.";
           messageEl.className = "red-text";
+          return;
         }
-      };
 
-      reader.readAsDataURL(photoFile);
+        const reader = new FileReader();
+        reader.onloadend = function () {
+          const base64Photo = reader.result;
+          localStorage.setItem("listing_photo", base64Photo);
+          const targetUrl = `price-suggestion.html?title=${encodeURIComponent(title)}&price=${encodeURIComponent(price)}&email=${encodeURIComponent(email)}`;
+          window.location.href = targetUrl;
+        };
+
+        reader.readAsDataURL(photoFile);
+      });
     });
 
     function logout() {
