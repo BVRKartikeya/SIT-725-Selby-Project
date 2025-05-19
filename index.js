@@ -16,7 +16,6 @@ app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-
 mongoose.connect('mongodb://localhost:27017/selby', {
   useNewUrlParser: true,
   useUnifiedTopology: true
@@ -49,8 +48,8 @@ const User = mongoose.model('User', userSchema);
 const Product = mongoose.model('Product', productSchema);
 const Review = mongoose.model('Review', reviewSchema);
 
-
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
+
 
 app.post('/register', async (req, res) => {
   const { name, email, password } = req.body;
@@ -68,10 +67,9 @@ app.post('/send-otp', async (req, res) => {
   user.otpToken = otp;
   await user.save();
 
-  console.log(`OTP for ${email}: ${otp}`); 
+  console.log(`OTP for ${email}: ${otp}`);
   res.json({ success: true });
 });
-
 
 app.post('/verify-otp', async (req, res) => {
   const { email, otp } = req.body;
@@ -86,7 +84,6 @@ app.post('/verify-otp', async (req, res) => {
 
   res.json({ success: true });
 });
-
 
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
@@ -111,26 +108,14 @@ app.post('/product', async (req, res) => {
   }
 });
 
-
-app.post('/api/review', async (req, res) => {
+app.get('/api/products', async (req, res) => {
   try {
-    const { productId, rating, comment } = req.body;
-    const review = new Review({ productId, rating, comment });
-    await review.save();
-    res.json({ success: true, message: 'Review submitted' });
+    const products = await Product.find({});
+    res.json({ success: true, products });
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Failed to submit review' });
+    res.status(500).json({ success: false, message: 'Failed to fetch products' });
   }
 });
-
-
-app.get('/api/review/average/:productId', async (req, res) => {
-  const { productId } = req.params;
-  const reviews = await Review.find({ productId });
-  const avg = reviews.length ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length) : 0;
-  res.json({ averageRating: avg.toFixed(2) });
-});
-
 
 app.post('/api/price-suggestion', async (req, res) => {
   const { title, price } = req.body;
@@ -159,15 +144,32 @@ app.post('/api/price-suggestion', async (req, res) => {
   }
 });
 
-
-app.get('/api/products', async (req, res) => {
+app.post('/api/review', async (req, res) => {
   try {
-    const products = await Product.find({});
-    res.json({ success: true, products });
+    const { productId, rating, comment } = req.body;
+    const review = new Review({ productId, rating, comment });
+    await review.save();
+    res.json({ success: true, message: 'Review submitted' });
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Failed to fetch products' });
+    res.status(500).json({ success: false, message: 'Failed to submit review' });
   }
 });
 
+app.get('/api/review/average/:productId', async (req, res) => {
+  const { productId } = req.params;
+  const reviews = await Review.find({ productId });
+  const avg = reviews.length ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length) : 0;
+  res.json({ averageRating: avg.toFixed(2) });
+});
+
+
+app.get('/api/chat/users', async (req, res) => {
+  try {
+    const users = await Product.distinct("ownerEmail");
+    res.json({ success: true, users });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to fetch users' });
+  }
+});
 
 app.listen(PORT, () => console.log(`Selby Server running at http://localhost:${PORT}`));
