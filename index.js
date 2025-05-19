@@ -159,4 +159,15 @@ app.post('/api/price-suggestion', async (req, res) => {
   }
 });
 
+
+app.get('/api/products', async (req, res) => {
+  try {
+    const products = await Product.find({});
+    res.json({ success: true, products });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to fetch products' });
+  }
+});
+
+
 app.listen(PORT, () => console.log(`Selby Server running at http://localhost:${PORT}`));

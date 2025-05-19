@@ -7,7 +7,18 @@
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body class="container">
-  <h4 class="blue-text text-darken-3 center-align">Add a Product</h4>
+  
+  <nav class="blue darken-3">
+    <div class="nav-wrapper container">
+      <a href="#" class="brand-logo">Selby</a>
+      <ul id="nav-mobile" class="right hide-on-med-and-down">
+        <li><a href="display.html">View Products</a></li>
+        <li><a href="#" onclick="logout()">Logout</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <h4 class="blue-text text-darken-3 center-align" style="margin-top: 20px;">Add a Product</h4>
 
   <form id="productForm">
     <div class="input-field">
@@ -39,12 +50,7 @@
     <p id="message" class="center-align"></p>
   </form>
 
-  <div class="center-align" style="margin-top: 20px;">
-    <button class="btn red" onclick="logout()">Logout</button>
-  </div>
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-
 
   <script>
     const email = new URLSearchParams(window.location.search).get('email') || localStorage.getItem('user_email');
