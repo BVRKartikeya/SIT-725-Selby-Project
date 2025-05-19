@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Product Listings</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+</head>
+<body class="container">
+  <h4 class="center-align blue-text text-darken-3">Available Products</h4>
+
+  <div id="productList" class="row"></div>
+
+  <div class="center-align" style="margin-top: 20px;">
+    <button class="btn red" onclick="logout()">Logout</button>
+  </div>
+
+  <script>
+    async function fetchProducts() {
+      const res = await fetch("/api/products");
+      const data = await res.json();
+      const container = document.getElementById("productList");
+      container.innerHTML = "";
+
+      if (data.success && data.products.length > 0) {
+        data.products.forEach(product => {
+          const col = document.createElement("div");
+          col.className = "col s12 m6 l4";
+
+          const card = `
+            <div class="card">
+              <div class="card-image">
+                <img src="${product.photo}" alt="Product Image" style="height:200px;object-fit:cover;">
+              </div>
+              <div class="card-content">
+                <span class="card-title">${product.title}</span>
+                <p><strong>Price:</strong> $${product.price}</p>
+                <p><strong>Owner:</strong> ${product.ownerEmail}</p>
+              </div>
+            </div>`;
+          col.innerHTML = card;
+          container.appendChild(col);
+        });
+      } else {
+        container.innerHTML = "<p class='red-text center-align'>No products found.</p>";
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem("user_email");
+      window.location.href = "index.html";
+    }
+
+    fetchProducts();
+  </script>
+</body>
+</html>
+
