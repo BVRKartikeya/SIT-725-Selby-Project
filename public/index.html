@@ -101,8 +101,14 @@
       const data = await res.json();
       if (data.success) {
         alert("Login successful!");
-        localStorage.setItem("user_email", email); 
-        window.location.href = "listing.html?email=" + encodeURIComponent(email);
+        localStorage.setItem("user_email", email);
+
+        
+        if (email === "admin@selby.com") {
+          window.location.href = "admin.html";
+        } else {
+          window.location.href = "listing.html?email=" + encodeURIComponent(email);
+        }
       } else {
         alert("Invalid credentials!");
       }
