@@ -3,12 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <title>Product Review</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
   <style>
     .star-rating {
       direction: rtl;
       display: flex;
       justify-content: center;
+      margin-bottom: 20px;
     }
     .star-rating input[type="radio"] {
       display: none;
@@ -17,39 +19,57 @@
       font-size: 2rem;
       color: #ccc;
       cursor: pointer;
+      transition: color 0.3s;
     }
     .star-rating input:checked ~ label,
     .star-rating label:hover,
     .star-rating label:hover ~ label {
       color: gold;
     }
+    body {
+      background-color: #f5f5f5;
+    }
+    .container {
+      max-width: 600px;
+      margin-top: 50px;
+    }
+    textarea.materialize-textarea {
+      padding: 10px;
+    }
   </style>
 </head>
-<body class="container">
-  <h4 class="center-align blue-text">Leave a Review</h4>
+<body>
+  <div class="container white z-depth-2" style="padding: 30px; border-radius: 8px;">
+    <h4 class="center-align blue-text text-darken-2">Leave a Review</h4>
 
-  <form id="reviewForm">
-    <div class="star-rating">
-      <input type="radio" id="5-stars" name="rating" value="5"><label for="5-stars">&#9733;</label>
-      <input type="radio" id="4-stars" name="rating" value="4"><label for="4-stars">&#9733;</label>
-      <input type="radio" id="3-stars" name="rating" value="3"><label for="3-stars">&#9733;</label>
-      <input type="radio" id="2-stars" name="rating" value="2"><label for="2-stars">&#9733;</label>
-      <input type="radio" id="1-star" name="rating" value="1"><label for="1-star">&#9733;</label>
-    </div>
+    <form id="reviewForm">
+      <div class="star-rating">
+        <input type="radio" id="5-stars" name="rating" value="5"><label for="5-stars">&#9733;</label>
+        <input type="radio" id="4-stars" name="rating" value="4"><label for="4-stars">&#9733;</label>
+        <input type="radio" id="3-stars" name="rating" value="3"><label for="3-stars">&#9733;</label>
+        <input type="radio" id="2-stars" name="rating" value="2"><label for="2-stars">&#9733;</label>
+        <input type="radio" id="1-star" name="rating" value="1"><label for="1-star">&#9733;</label>
+      </div>
 
-    <div class="input-field">
-      <textarea id="comment" class="materialize-textarea" required></textarea>
-      <label for="comment">Your Review</label>
-    </div>
+      <div class="input-field">
+        <textarea id="comment" class="materialize-textarea" required></textarea>
+        <label for="comment">Your Review</label>
+      </div>
 
-    <div class="center-align">
-      <button type="submit" class="btn green">Submit Review</button>
-    </div>
-    <p class="center-align" id="message"></p>
-    <p class="center-align" id="avgRatingDisplay"></p>
-  </form>
+      <div class="center-align" style="margin-top: 20px;">
+        <button type="submit" class="btn green">Submit Review</button>
+      </div>
+      <p class="center-align" id="message" style="margin-top: 15px;"></p>
+      <p class="center-align" id="avgRatingDisplay" style="margin-top: 10px;"></p>
+    </form>
+  </div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
   <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      M.updateTextFields();
+    });
+
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('productId');
 
@@ -60,6 +80,7 @@
 
       if (!rating) {
         document.getElementById("message").textContent = "Please select a rating.";
+        document.getElementById("message").className = "red-text center-align";
         return;
       }
 
@@ -71,6 +92,7 @@
 
       const data = await res.json();
       document.getElementById("message").textContent = data.message || "Submitted!";
+      document.getElementById("message").className = "green-text center-align";
       loadAverageRating();
 
       setTimeout(() => {

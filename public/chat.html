@@ -98,21 +98,16 @@
   </div>
 
   <div class="chat-container">
-    
     <div class="user-list">
       <h6>Users</h6>
       <ul id="userList" class="collection"></ul>
     </div>
 
-    
     <div class="chat-box">
-      <div class="chat-messages" id="chatMessages">
-        <div class="message sent">Hi there!</div>
-        <div class="message received">Hello!</div>
-      </div>
+      <div class="chat-messages" id="chatMessages"></div>
 
       <div class="chat-input">
-        <input type="text" id="messageInput" placeholder="Type your message..." />
+        <input type="text" id="messageInput" placeholder="Type your message..." autocomplete="off" />
         <button class="btn blue" onclick="sendMessage()">Send</button>
       </div>
     </div>
