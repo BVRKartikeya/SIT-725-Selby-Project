@@ -74,9 +74,11 @@ button[type="submit"] {
 button[type="submit"]:hover {
   background-color: #0056b3;
 }
+
 .card {
   padding: 20px;
 }
+
 .tabs .tab a {
   color: #1976d2;
 }
@@ -84,4 +86,11 @@ button[type="submit"]:hover {
   background-color: #e3f2fd;
   color: #0d47a1;
   border-radius: 5px;
+}
+
+@media (max-width: 600px) {
+  button[type="submit"], .btn {
+    font-size: 1rem;
+    padding: 12px;
+  }
 }
