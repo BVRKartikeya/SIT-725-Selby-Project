@@ -172,4 +172,15 @@ app.get('/api/chat/users', async (req, res) => {
   }
 });
 
+app.delete('/api/products/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await Product.findByIdAndDelete(id);
+    res.json({ success: true, message: 'Product deleted' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to delete product' });
+  }
+});
+
+
 app.listen(PORT, () => console.log(`Selby Server running at http://localhost:${PORT}`));
