@@ -33,85 +33,98 @@
     <button class="btn grey darken-4" onclick="logout()">Logout</button>
   </div>
 
-  <script>
-    const adminEmail = "admin@selby.com";
-    const userEmail = localStorage.getItem("user_email");
+<script>
+  const adminEmail = "admin@selby.com";
+  const userEmail = localStorage.getItem("user_email");
 
-    if (userEmail !== adminEmail) {
-      alert("Unauthorized access. Redirecting...");
-      window.location.href = "index.html";
-    }
+  if (userEmail !== adminEmail) {
+    alert("Unauthorized access. Redirecting...");
+    window.location.href = "index.html";
+  }
 
-    async function loadProducts() {
-      const res = await fetch("/api/products");
-      const data = await res.json();
-      const container = document.getElementById("adminPanel");
-      const userStats = {};
-      container.innerHTML = "";
+  async function loadProducts() {
+    const res = await fetch("/api/products");
+    const data = await res.json();
+    const container = document.getElementById("adminPanel");
+    const userStats = {};
+    container.innerHTML = "";
 
-      if (data.success && data.products.length > 0) {
-        document.getElementById("totalProducts").textContent = data.products.length;
+    if (data.success && data.products.length > 0) {
+      document.getElementById("totalProducts").textContent = data.products.length;
 
-        data.products.forEach(product => {
-          const email = product.ownerEmail || "unknown";
-          userStats[email] = (userStats[email] || 0) + 1;
+      data.products.forEach(product => {
+        const email = product.ownerEmail || "unknown";
+        userStats[email] = (userStats[email] || 0) + 1;
 
-          const col = document.createElement("div");
-          col.className = "col s12 m6";
+        const col = document.createElement("div");
+        col.className = "col s12 m6";
 
-          col.innerHTML = `
-            <div class="card">
-              <div class="card-content">
-                <span class="card-title">${product.title}</span>
-                <p><strong>Price:</strong> $${product.price}</p>
-                <p><strong>Status:</strong> Active</p>
-                <p><strong>Owner:</strong> ${email}</p>
-              </div>
-              <div class="card-action">
-                <button class="btn red" onclick="deleteProduct('${product._id}')">Delete</button>
-              </div>
+        col.innerHTML = `
+          <div class="card">
+            <div class="card-content">
+              <span class="card-title">${product.title}</span>
+              <p><strong>Price:</strong> $${product.price}</p>
+              <p><strong>Status:</strong> ${product.status}</p>
+              <p><strong>Owner:</strong> ${email}</p>
             </div>
-          `;
-          container.appendChild(col);
-        });
-
-        const statsList = document.getElementById("userStats");
-        statsList.innerHTML = "";
-        Object.entries(userStats).forEach(([email, count]) => {
-          const li = document.createElement("li");
-          li.textContent = `${email}: ${count}`;
-          statsList.appendChild(li);
-        });
-
-      } else {
-        document.getElementById("totalProducts").textContent = "0";
-        container.innerHTML = "<p class='red-text center-align'>No products available.</p>";
-      }
-    }
-
-    async function deleteProduct(productId) {
-      const confirmDelete = confirm("Are you sure you want to delete this product?");
-      if (!confirmDelete) return;
-
-      const res = await fetch(`/api/products/${productId}`, {
-        method: "DELETE"
+            <div class="card-action">
+              <button class="btn red" onclick="deleteProduct('${product._id}')">Delete</button>
+              ${product.status === 'pending' ? `<button class="btn green" onclick="approveProduct('${product._id}')">Approve</button>` : ''}
+            </div>
+          </div>
+        `;
+        container.appendChild(col);
       });
 
-      const data = await res.json();
-      if (data.success) {
-        alert("Product deleted.");
-        loadProducts();
-      } else {
-        alert("Failed to delete product.");
-      }
-    }
+      const statsList = document.getElementById("userStats");
+      statsList.innerHTML = "";
+      Object.entries(userStats).forEach(([email, count]) => {
+        const li = document.createElement("li");
+        li.textContent = `${email}: ${count}`;
+        statsList.appendChild(li);
+      });
 
-    function logout() {
-      localStorage.removeItem("user_email");
-      window.location.href = "index.html";
+    } else {
+      document.getElementById("totalProducts").textContent = "0";
+      container.innerHTML = "<p class='red-text center-align'>No products available.</p>";
     }
+  }
 
-    loadProducts();
-  </script>
+  async function deleteProduct(productId) {
+    const confirmDelete = confirm("Are you sure you want to delete this product?");
+    if (!confirmDelete) return;
+
+    const res = await fetch(`/api/products/${productId}`, {
+      method: "DELETE"
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      alert("Product deleted.");
+      loadProducts();
+    } else {
+      alert("Failed to delete product.");
+    }
+  }
+
+  async function approveProduct(productId) {
+    const res = await fetch(`/api/products/${productId}/approve`, { method: "POST" });
+    const data = await res.json();
+    if (data.success) {
+      alert("Product approved.");
+      loadProducts();
+    } else {
+      alert("Failed to approve product.");
+    }
+  }
+
+  function logout() {
+    localStorage.removeItem("user_email");
+    window.location.href = "index.html";
+  }
+
+  loadProducts();
+</script>
+
 </body>
 </html>
