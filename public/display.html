@@ -8,43 +8,100 @@
 <body class="container">
   <h4 class="center-align blue-text text-darken-3">Available Products</h4>
 
-  <div id="productList" class="row"></div>
+  
+  <div class="row">
+    <div class="input-field col s12 m6">
+      <input type="text" id="searchInput" placeholder="Search by product title or owner email">
+    </div>
+    <div class="input-field col s6 m3">
+      <input type="number" id="minPrice" placeholder="Min Price ($)">
+    </div>
+    <div class="input-field col s6 m3">
+      <input type="number" id="maxPrice" placeholder="Max Price ($)">
+    </div>
+  </div>
+  <div class="center-align" style="margin-bottom: 15px;">
+    <button class="btn blue" onclick="applyFilters()">Apply Filters</button>
+    <button class="btn grey" onclick="resetFilters()">Reset</button>
+  </div>
 
-  <div class="center-align" style="margin-top: 20px;">
+  <p id="errorMsg" class="red-text center-align" style="margin-top: 10px;"></p>
+
+  <div id="productList" class="row" style="margin-top: 20px;"></div>
+
+  <div class="center-align" style="margin-top: 30px;">
     <button class="btn red" onclick="logout()">Logout</button>
   </div>
 
   <script>
-async function fetchProducts() {
-  const res = await fetch("/api/products");
-  const data = await res.json();
-  const container = document.getElementById("productList");
-  container.innerHTML = "";
+    let allProducts = [];
 
-  if (data.success && data.products.length > 0) {
-    const approved = data.products.filter(p => p.status === "approved");
-    approved.forEach(product => {
-      const col = document.createElement("div");
-      col.className = "col s12 m6 l4";
-      const card = `
-        <div class="card">
-          <div class="card-image">
-            <img src="${product.photo}" alt="Product Image" style="width:100%;height:auto;object-fit:cover;">
-          </div>
-          <div class="card-content">
-            <span class="card-title">${product.title}</span>
-            <p><strong>Price:</strong> $${product.price}</p>
-            <p><strong>Owner:</strong> ${product.ownerEmail}</p>
-          </div>
-        </div>`;
-      col.innerHTML = card;
-      container.appendChild(col);
-    });
-  } else {
-    container.innerHTML = "<p class='red-text center-align'>No products found.</p>";
-  }
-}
+    function displayProducts(products) {
+      const container = document.getElementById("productList");
+      const errorMsg = document.getElementById("errorMsg");
+      container.innerHTML = "";
+      errorMsg.textContent = "";
 
+      if (!products.length) {
+        errorMsg.textContent = "No matching products found.";
+        return;
+      }
+
+      products.forEach(product => {
+        const col = document.createElement("div");
+        col.className = "col s12 m6 l4";
+        col.innerHTML = `
+          <div class="card">
+            <div class="card-image">
+              <img src="${product.photo}" alt="Product Image" style="width:100%;height:auto;object-fit:cover;">
+            </div>
+            <div class="card-content">
+              <span class="card-title">${product.title}</span>
+              <p><strong>Price:</strong> $${product.price}</p>
+              <p><strong>Owner:</strong> ${product.ownerEmail}</p>
+            </div>
+          </div>
+        `;
+        container.appendChild(col);
+      });
+    }
+
+    async function fetchProducts() {
+      try {
+        const res = await fetch("/api/products");
+        const data = await res.json();
+        if (data.success) {
+          allProducts = data.products.filter(p => p.status === "approved");
+          displayProducts(allProducts);
+        } else {
+          document.getElementById("errorMsg").textContent = "Failed to fetch products.";
+        }
+      } catch (err) {
+        document.getElementById("errorMsg").textContent = "Server error while loading products.";
+      }
+    }
+
+    function applyFilters() {
+      const query = document.getElementById("searchInput").value.toLowerCase();
+      const minPrice = parseFloat(document.getElementById("minPrice").value);
+      const maxPrice = parseFloat(document.getElementById("maxPrice").value);
+
+      let filtered = allProducts.filter(p => {
+        const matchesSearch = p.title.toLowerCase().includes(query) || p.ownerEmail.toLowerCase().includes(query);
+        const matchesPrice = (!isNaN(minPrice) ? p.price >= minPrice : true) &&
+                             (!isNaN(maxPrice) ? p.price <= maxPrice : true);
+        return matchesSearch && matchesPrice;
+      });
+
+      displayProducts(filtered);
+    }
+
+    function resetFilters() {
+      document.getElementById("searchInput").value = "";
+      document.getElementById("minPrice").value = "";
+      document.getElementById("maxPrice").value = "";
+      displayProducts(allProducts);
+    }
 
     function logout() {
       localStorage.removeItem("user_email");
