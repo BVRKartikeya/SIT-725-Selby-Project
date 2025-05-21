@@ -22,12 +22,12 @@ mongoose.connect('mongodb://localhost:27017/selby', {
 }).then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB error:', err));
 
-
 const userSchema = new mongoose.Schema({
   name: String,
   email: { type: String, unique: true },
   password: String,
   otpToken: String,
+  otpExpires: Date,
   isVerified: { type: Boolean, default: false }
 });
 
@@ -35,7 +35,8 @@ const productSchema = new mongoose.Schema({
   title: String,
   price: Number,
   photo: String,
-  ownerEmail: String
+  ownerEmail: String,
+  status: { type: String, default: 'pending' }
 });
 
 const reviewSchema = new mongoose.Schema({
@@ -50,7 +51,6 @@ const Review = mongoose.model('Review', reviewSchema);
 
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 
-
 app.post('/register', async (req, res) => {
   const { name, email, password } = req.body;
   const user = new User({ name, email, password });
@@ -62,28 +62,34 @@ app.post('/send-otp', async (req, res) => {
   const { email } = req.body;
   const otp = generateOTP();
   const user = await User.findOne({ email });
+
   if (!user) return res.json({ success: false, message: "User not found" });
 
   user.otpToken = otp;
+  user.otpExpires = new Date(Date.now() + 5 * 60 * 1000);
   await user.save();
 
   console.log(`OTP for ${email}: ${otp}`);
   res.json({ success: true });
 });
 
+
 app.post('/verify-otp', async (req, res) => {
   const { email, otp } = req.body;
   const user = await User.findOne({ email });
-  if (!user || user.otpToken !== otp) {
+
+  if (!user || user.otpToken !== otp || user.otpExpires < Date.now()) {
     return res.json({ success: false, message: "Invalid or expired OTP" });
   }
 
   user.isVerified = true;
   user.otpToken = null;
+  user.otpExpires = null;
   await user.save();
 
   res.json({ success: true });
 });
+
 
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
@@ -99,11 +105,10 @@ app.post('/login', async (req, res) => {
 app.post('/product', async (req, res) => {
   try {
     const { title, price, photo, ownerEmail } = req.body;
-    const newProduct = new Product({ title, price, photo, ownerEmail });
+    const newProduct = new Product({ title, price, photo, ownerEmail, status: "pending" });
     await newProduct.save();
     res.json({ success: true, productId: newProduct._id });
   } catch (err) {
-    console.error('Product listing error:', err);
     res.status(500).json({ success: false, message: 'Failed to list product' });
   }
 });
@@ -117,19 +122,35 @@ app.get('/api/products', async (req, res) => {
   }
 });
 
+app.post('/api/products/:id/approve', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await Product.findByIdAndUpdate(id, { status: "approved" });
+    res.json({ success: true, message: 'Product approved' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Approval failed' });
+  }
+});
+
+app.delete('/api/products/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await Product.findByIdAndDelete(id);
+    res.json({ success: true, message: 'Product deleted' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to delete product' });
+  }
+});
+
 app.post('/api/price-suggestion', async (req, res) => {
   const { title, price } = req.body;
-
   try {
     const response = await fetch('https://fakestoreapi.com/products');
     const products = await response.json();
-
     const matched = products.filter(p =>
       p.title.toLowerCase().includes(title.toLowerCase())
     );
-
     const prices = matched.map(p => parseFloat(p.price)).filter(p => !isNaN(p));
-
     if (prices.length > 0) {
       const avg = prices.reduce((sum, p) => sum + p, 0) / prices.length;
       res.json({ suggestedPrice: avg.toFixed(2), source: 'FakeStoreAPI' });
@@ -138,7 +159,6 @@ app.post('/api/price-suggestion', async (req, res) => {
       res.json({ suggestedPrice: fallbackPrice.toFixed(2), fallback: true });
     }
   } catch (err) {
-    console.error('Error contacting FakeStore API:', err);
     const fallbackPrice = parseFloat(price) * 1.1;
     res.json({ suggestedPrice: fallbackPrice.toFixed(2), fallback: true });
   }
@@ -162,7 +182,6 @@ app.get('/api/review/average/:productId', async (req, res) => {
   res.json({ averageRating: avg.toFixed(2) });
 });
 
-
 app.get('/api/chat/users', async (req, res) => {
   try {
     const users = await Product.distinct("ownerEmail");
@@ -171,16 +190,18 @@ app.get('/api/chat/users', async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to fetch users' });
   }
 });
-
-app.delete('/api/products/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    await Product.findByIdAndDelete(id);
-    res.json({ success: true, message: 'Product deleted' });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Failed to delete product' });
+async function createAdminUserIfNotExists() {
+  const existingAdmin = await User.findOne({ email: 'admin@selby.com' });
+  if (!existingAdmin) {
+    const adminUser = new User({
+      name: 'Admin',
+      email: 'admin@selby.com',
+      password: 'admin123',
+      isVerified: true
+    });
+    await adminUser.save();
+   
   }
-});
-
-
+}
+createAdminUserIfNotExists();
 app.listen(PORT, () => console.log(`Selby Server running at http://localhost:${PORT}`));
