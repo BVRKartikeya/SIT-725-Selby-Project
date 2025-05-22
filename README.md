@@ -42,6 +42,46 @@ node index.js
 Username - admin@selby.com
 Password - admin123
 
+# Fallback of admin credentials if there is an error due to mongodb
+const adminUser = new User({
+  name: 'Admin',
+  email: 'admin@selby.com',
+  password: 'admin123',
+  isVerified: true
+});
+
+# Admin route protection (there is only frontend protection)
+if (userEmail !== "admin@selby.com") {
+  alert("Unauthorized access");
+  window.location.href = "index.html";
+}
+
+# For addition of more admins 
+To change or add more admins:
+Manually edit user in MongoDB or
+Extend schema with role: String field, and check it in frontend/backend
+
+# Example - 
+const userSchema = new mongoose.Schema({
+  name: String,
+  email: String,
+  password: String,
+  role: { type: String, default: "user" }
+});
+
+# For test users 
+There are few existing test users one of which credentials are given below:
+Username-kb@gmail.com
+Password-sahit
+
+For adding new test users follow the example given below:
+db.users.insertOne({
+  name: "Test User",
+  email: "user1@example.com",
+  password: "test123",
+  isVerified: true
+ });
+
 # Known Issues 
 LocalStorage Reliance: User session is tracked with localStorage, which can be cleared or manipulated manually.
 
