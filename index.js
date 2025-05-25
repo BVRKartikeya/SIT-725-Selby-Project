@@ -32,4 +32,8 @@ app.use('/', productRoutes);
 app.use('/', reviewRoutes);
 app.use('/', chatRoutes);
 
+if (process.env.NODE_ENV !== 'test') {
 app.listen(PORT, () => console.log(`Selby Server running at http://localhost:${PORT}`));
+}
+
+module.exports = app;
