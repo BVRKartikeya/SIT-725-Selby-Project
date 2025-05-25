@@ -3,6 +3,26 @@ This is our SIT 725 Project
 
 Selby is a marketplace web application built as part of the SIT725 unit. It allows users to register, list household goods, receive AI-based price suggestions, and interact via chat and reviews. An admin can manage all listings from a dedicated dashboard.
 
+--------------------
+Fake Store API
+[This API is purely for educational and demonstration purpose.]
+The Fake Store API (used internally for price suggestion) simulates an external price recommender.
+
+In this app, the POST /api/price-suggestion endpoint:
+
+Takes { title, price } from the frontend.
+Simulates fetching a suggested price by 2 ways-
+Firstly it matches the title with its data and returns an estimate price.
+If the title doesnt match with the data it will be returning the input price plus 10% [Fallback Logic]
+Example: if you submit $100, the suggestion returns $110.
+Note:
+In a real system, this would connect to:
+
+An external pricing engine.
+A third-party store API (like eBay, Amazon) to estimate competitive prices.
+For now, it’s a mock API purely for demonstration
+
+-------------------
 # Folder Structure -
 
 MVC Model-
@@ -69,6 +89,72 @@ SIT-725-Selby-Project/
 ├── package-lock.json        # Dependency lock file
 ├── README.md                # Project documentation
 └── .git/                    # Git version control folder
+
+
+##  API Endpoints
+
+### **Auth Endpoints (`/api`)**
+| Method | Endpoint         | Description                            |
+|--------|------------------|---------------------------------------|
+| POST   | /register        | Register a new user                   |
+| POST   | /login           | Login an existing user                |
+| POST   | /send-otp        | Send OTP for email verification       |
+| POST   | /verify-otp      | Verify the OTP for an email           |
+
+**Input:** JSON `{ name, email, password }` or `{ email, otp }`  
+**Output:** JSON `{ success: true/false, message }`
+
+---
+
+### **Product Endpoints (`/api`)**
+| Method | Endpoint                    | Description                              |
+|--------|-----------------------------|-----------------------------------------|
+| GET    | /products                   | Get all products                        |
+| POST   | /product                    | Create a new product                    |
+| DELETE | /products/:id               | Delete a product by ID                  |
+| POST   | /products/:id/approve       | Approve a pending product               |
+| POST   | /price-suggestion           | Get price suggestion for a product      |
+
+**Input:**  
+- Create: `{ title, price, photo, ownerEmail }`  
+- Approve/Delete: URL param `:id`  
+- Price Suggestion: `{ title, price }`
+
+**Output:** JSON `{ success: true/false, products / productId / suggestedPrice }`
+
+---
+
+### **Review Endpoints (`/api/review`)**
+| Method | Endpoint                  | Description                           |
+|--------|---------------------------|--------------------------------------|
+| POST   | /                         | Submit a review for a product        |
+| GET    | /average/:productId       | Get average rating for a product     |
+
+**Input:**  
+- Submit: `{ productId, rating, comment }`
+
+**Output:** JSON `{ success: true/false, message }` or `{ averageRating }`
+
+---
+
+### **Chat Endpoints (`/api/chat`)**
+| Method | Endpoint   | Description               |
+|--------|------------|--------------------------|
+| GET    | /users     | Get list of user emails  |
+
+**Output:** JSON `{ success: true/false, users: [email1, email2, ...] }`
+
+------
+# Database Setup
+
+Ensure MongoDB is installed and running locally.
+The app connects to the selby database.
+Collections:
+users → stores user details (name, email, hashed password, verified)
+products → stores product listings (title, price, photo, ownerEmail, status)
+reviews → stores product reviews (productId, rating, comment)
+
+-------
 
 To run the application locally:
 
